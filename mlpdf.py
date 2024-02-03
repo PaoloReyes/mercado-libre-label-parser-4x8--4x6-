@@ -2,15 +2,20 @@ import os, re, cv2
 import numpy as np
 from pdf2image import convert_from_path
 from PIL import Image
+from PyPDF2 import PdfWriter
 
 path = r'C:\Users\paolo\Downloads'
 
+created_labels = []
+
 def crop_and_merge_pdf(pdf, idx):
+    global created_labels
     pdf_label = convert_from_path(pdf, dpi=300)
 
     image_path = f'{path}\\pdf2img.jpg'
     cropped_image_path = f'{path}\\pdf2img_cropped.jpg'
-    output_file = f'{path}\\ML_Label_{idx+1}.pdf'
+    output_file = f'{path}\\ML_tmp_label_{idx+1}.pdf'
+    created_labels.append(output_file)
 
     pdf_label[0].save(image_path, 'JPEG')
     pdf_image = cv2.imread(image_path)
@@ -36,12 +41,34 @@ def crop_and_merge_pdf(pdf, idx):
 
 if __name__ == "__main__":
     pdfs = []
-    pattern = re.compile(r'\w+_labels\.pdf$', re.IGNORECASE)
+    pattern = re.compile(r'^[0-9 a-z]+_labels\.pdf$', re.IGNORECASE)
     for file in os.listdir(path):
         if pattern.search(file):
             pdfs.append(os.path.join(path, file))
 
     for idx, pdf in enumerate(pdfs):
         input_pdf = pdf.split('\\')[-1]
+        print('\n-------------------------------------------------------------')
         print(f'Processing {input_pdf}...')
         print(f'{crop_and_merge_pdf(pdf, idx)} has been processed at Downloads.')
+        print('-------------------------------------------------------------')
+
+    if len(created_labels):   
+        print('\n-------------------------------------------------------------')
+        print('Merging pdfs into a single file...')
+
+        pdf_writer = PdfWriter()    
+
+        for label in created_labels:
+            pdf_writer.append(label)
+        
+        with open(f'{path}\\ML_merged_labels.pdf', 'wb') as output_pdf:
+            pdf_writer.write(output_pdf)
+
+        for label in created_labels:
+            os.remove(label)
+
+        print('All pdfs have been merged into a single file at Downloads.')
+        print('-------------------------------------------------------------')
+    else:
+        print('No Mercado Libre pdfs were found.')
