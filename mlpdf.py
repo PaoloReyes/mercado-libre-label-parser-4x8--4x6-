@@ -61,6 +61,9 @@ if __name__ == "__main__":
 
         for label in created_labels:
             pdf_writer.append(label)
+
+        if os.path.exists(f'{path}\\ML_merged_labels.pdf'):
+            pdf_writer.append(f'{path}\\ML_merged_labels.pdf')
         
         with open(f'{path}\\ML_merged_labels.pdf', 'wb') as output_pdf:
             pdf_writer.write(output_pdf)
